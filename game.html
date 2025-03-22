@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess the Number Game</title>
+    <style>
+        /* Classy Animated Gradient Background */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(-45deg, #ff6f61, #de6262, #485563, #29323c);
+            background-size: 400% 400%;
+            animation: gradientBG 10s ease infinite;
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Glassmorphism Effect */
+        #game-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 300px;
+        }
+
+        h1 {
+            font-size: 24px;
+        }
+
+        input, button {
+            padding: 10px;
+            font-size: 16px;
+            margin: 10px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        button {
+            background: #ff6f61;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #de6262;
+        }
+
+        #res {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* Leaderboard Styling */
+        #leaderboard {
+            margin-top: 20px;
+            list-style: none;
+            padding: 0;
+        }
+
+        #leaderboard li {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 8px;
+            border-radius: 5px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🎯 Guess the Number Game 🎯</h1>
+
+<div id="game-container">
+    <p>Select Difficulty: 
+        <select id="difficulty">
+            <option value="10">Easy (1-10)</option>
+            <option value="50">Medium (1-50)</option>
+            <option value="100">Hard (1-100)</option>
+        </select>
+    </p>
+    
+    <p>Player 1: <input type="text" id="player1" placeholder="Enter name"></p>
+    <p>Player 2: <input type="text" id="player2" placeholder="Enter name"></p>
+    
+    <button onclick="startGame()">Start Game</button>
+    
+    <p>Guess the Number:</p>
+    <input id="guess" type="number">
+    <button onclick="check()">Check</button>
+    
+    <p id="res"></p>
+    <p>Attempts Left: <span id="attempts">5</span></p>
+    <p>Score: <span id="score">0</span></p>
+</div>
+
+<h2>🏆 Leaderboard 🏆</h2>
+<ul id="leaderboard"></ul>
+
+<script>
+    let rand, attempts, score = 0;
+    let maxAttempts = 5;
+    let maxNumber = 10;
+    let currentPlayer;
+    let players = [];
+    let currentIndex = 0;
+
+    function startGame() {
+        maxNumber = parseInt(document.getElementById("difficulty").value);
+        rand = Math.floor(Math.random() * maxNumber) + 1;
+        attempts = maxAttempts;
+        document.getElementById("attempts").textContent = attempts;
+        document.getElementById("res").textContent = "";
+        
+        players = [
+            document.getElementById("player1").value || "Player 1",
+            document.getElementById("player2").value || "Player 2"
+        ];
+        currentPlayer = players[currentIndex];
+        alert(`${currentPlayer}, it's your turn!`);
+    }
+
+    function check() {
+        let num = parseInt(document.getElementById("guess").value);
+        let res = document.getElementById("res");
+
+        if (isNaN(num) || num < 1 || num > maxNumber) {
+            res.textContent = `Please enter a number between 1 and ${maxNumber}!`;
+            res.style.color = "orange";
+            return;
+        }
+
+        attempts--;
+        document.getElementById("attempts").textContent = attempts;
+
+        if (num === rand) {
+            res.textContent = `🎉 Correct! ${currentPlayer} wins!`;
+            res.style.color = "green";
+            score++;
+            document.getElementById("score").textContent = score;
+            saveScore(currentPlayer, score);
+            setTimeout(startGame, 2000);
+        } else {
+            res.textContent = num < rand ? "📉 Too Low! Try Again." : "📈 Too High! Try Again.";
+            res.style.color = "red";
+
+            if (attempts === 0) {
+                res.textContent = `💀 Game Over! The correct number was ${rand}.`;
+                res.style.color = "black";
+                setTimeout(startGame, 2000);
+            }
+        }
+        
+        switchPlayer();
+    }
+
+    function switchPlayer() {
+        currentIndex = (currentIndex + 1) % players.length;
+        currentPlayer = players[currentIndex];
+        setTimeout(() => alert(`${currentPlayer}, it's your turn!`), 500);
+    }
+
+    function saveScore(player, score) {
+        let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+        leaderboard.push({ player, score });
+        leaderboard.sort((a, b) => b.score - a.score);
+        localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+        displayLeaderboard();
+    }
+
+    function displayLeaderboard() {
+        let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+        let leaderboardList = document.getElementById("leaderboard");
+        leaderboardList.innerHTML = "";
+        leaderboard.forEach(entry => {
+            let li = document.createElement("li");
+            li.textContent = `${entry.player}: ${entry.score} points`;
+            leaderboardList.appendChild(li);
+        });
+    }
+
+    displayLeaderboard();
+</script>
+
+</body>
+</html>
